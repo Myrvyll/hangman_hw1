@@ -3,8 +3,8 @@
 # The 6.0001 Word Game
 # Created by: Kevin Luu <luuk> and Jenna Wiens <jwiens>
 #
-# Name          : <your name>
-# Collaborators : <your collaborators>
+# Name          : Babych Iryna (Myrvyll)
+# Collaborators : --
 # Time spent    : <total time>
 
 import math
@@ -91,8 +91,20 @@ def get_word_score(word, n):
     n: int >= 0
     returns: int >= 0
     """
-    
-    pass  # TO DO... Remove this line when you implement this function
+    wordlen = len(word)
+    word = word.lower()
+
+    sum_of_letters = 0
+    for el in word:
+        sum_of_letters += SCRABBLE_LETTER_VALUES[el]
+
+    coefficient = 7*wordlen - 3*(n-wordlen)
+    if coefficient < 1:
+        coefficient = 1
+
+    return sum_of_letters*coefficient
+
+
 
 #
 # Make sure you understand how this function works and what it does!
@@ -168,8 +180,16 @@ def update_hand(hand, word):
     returns: dictionary (string -> int)
     """
 
-    pass  # TO DO... Remove this line when you implement this function
+    hand2 = hand.copy()
+    word = word.lower()
 
+    for el in word:
+        if not hand2[el]:
+            pass
+        else:
+            hand2[el] -= 1
+            
+    return hand2
 #
 # Problem #3: Test word validity
 #
@@ -185,7 +205,26 @@ def is_valid_word(word, hand, word_list):
     returns: boolean
     """
 
-    pass  # TO DO... Remove this line when you implement this function
+    hand2 = hand.copy()
+    word = word.lower()
+
+
+    if word not in word_list:
+
+        return False
+
+    for letter in word:
+
+        if hand.get(letter) == None:
+            return False
+            
+        if not hand2[letter]:
+
+            return False
+        else:
+            hand2[letter] -= 1
+
+    return True
 
 #
 # Problem #5: Playing a hand
