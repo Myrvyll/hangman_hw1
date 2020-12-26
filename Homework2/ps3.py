@@ -9,13 +9,13 @@
 
 import math
 import random
-import string
 
 VOWELS = 'aeiou'
 CONSONANTS = 'bcdfghjklmnpqrstvwxyz'
 LETTERS = 'aeioubcdfghjklmnpqrstvwxyz'
 HAND_SIZE = 7
 WILDCARD = '*'
+STOP_GAME = '!!'
 
 SCRABBLE_LETTER_VALUES = {
     'a': 1, 'b': 3, 'c': 3, 'd': 2, 'e': 1, 'f': 4, 'g': 2, 'h': 4, 'i': 1, 'j': 8, 'k': 5, 'l': 1, 'm': 3, 'n': 1, 'o': 1, 'p': 3, 'q': 10, 'r': 1, 's': 1, 't': 1, 'u': 1, 'v': 4, 'w': 4, 'x': 8, 'y': 4, 'z': 10, '*': 0
@@ -84,7 +84,7 @@ def get_word_score(word, n):
     for el in word:
         sum_of_letters += SCRABBLE_LETTER_VALUES[el]
 
-    coefficient = 7*wordlen - 3*(n-wordlen)
+    coefficient = HAND_SIZE*wordlen - 3*(n-wordlen)
     if coefficient < 1:
         coefficient = 1
 
@@ -123,17 +123,15 @@ def enter_natnumbers(comment):
     while wrong:
         number = input(comment)
 
-        try:
-            number = int(number)
-            if number <= 0:
-                raise TypeError
-            wrong = False
+        if number.isdigit():
 
-        except ValueError:
+            if int(number) > 0:
+                wrong = False
+            else:
+                print('Number of hands must be more or equal to 1.')
+        else:
             print('It is not a number. Try again.')
-        except TypeError:
-            print('Number of hands must be more or equal to 1.')
-
+            
     return int(number)
 
 
@@ -192,7 +190,7 @@ def deal_hand(n):
     returns: dictionary (string -> int)
     """
     
-    hand = {}
+    hand = {'*': 1}
     num_vowels = int(math.ceil(n / 3))
 
     for _ in range(num_vowels-1):
@@ -202,8 +200,6 @@ def deal_hand(n):
     for _ in range(num_vowels, n):    
         x = random.choice(CONSONANTS)
         hand[x] = hand.get(x, 0) + 1
-
-    hand[WILDCARD] = 1
     
     return hand
 
@@ -219,16 +215,17 @@ def update_hand(hand, word):
     hand: dictionary (string -> int)    
     returns: dictionary (string -> int)
     """
-
     hand2 = hand.copy()
     word = word.lower()
 
     for el in word:
-        if not hand2.get(el, 0):
-            pass
-        else:
+
+        if hand2.get(el, 0):
             hand2[el] -= 1
-            
+        
+        if not hand2.get(el, 1):
+            del hand2[el]
+
     return hand2
 
 
@@ -245,35 +242,29 @@ def is_valid_word(word, hand, word_list):
     """
     hand2 = hand.copy()
     word = word.lower()
+    word_dict = get_frequency_dict(word.lower())
+    
+    for letter in word:
+        #checks whether all letters are in hand
+        if letter not in hand2.keys():
+            return False
+        #checks whether there are enough letters for word in hand 
+        elif hand2[letter] < word_dict[letter]:
+            return False
 
     #checks whether word with wildcard exists
-    if word.find(WILDCARD) != -1:
-
-        found = False                           
+    if word_dict.get(WILDCARD, 0):         
         for element in VOWELS:
             word2 = word.replace(WILDCARD, element)
 
             if word2 in word_list:
-                found = True
-        
-        if not found:
-            return False
+                return True
 
-    #checks whether common word exist
-    elif word not in word_list:
-        return False
-
-    #checks whether there are enough letters in hand
-    for letter in word:
-
-        if hand.get(letter) == None:
-            return False
-        if not hand2[letter]:
-            return False
-        else:
-            hand2[letter] -= 1
-
-    return True
+    #checks whether word exists
+    if word in word_list:
+        return True
+    
+    return False
 
 
 def calculate_handlen(hand):
@@ -283,9 +274,7 @@ def calculate_handlen(hand):
     hand: dictionary (string-> int)
     returns: integer
     """
-    summa = 0
-    for item in hand.values():
-        summa += item
+    summa = sum(hand.values())
 
     return summa
 
@@ -312,7 +301,7 @@ def play_hand(hand, word_list):
         word = input('Enter word, or “!!” to indicate that you are finished: ')
         
         #stops function if !! is inputted
-        if word == '!!':
+        if word == STOP_GAME:
             playing = False
             continue
 
@@ -374,41 +363,42 @@ def substitute_hand(hand, letter):
 def play_game(word_list):
     """
     Allow the user to play a series of hands
-      
-    word_list: list of lowercase strings
-    Return: the total score for the series of hands
+      word_list: list of lowercase strings
+      Return: the total score for the series of hands
     """
-
     number_of_hands = enter_natnumbers('Enter total number of hands: ')
-
+    can_substitude = True
+    can_replay = True
     overall_score = 0
 
     while number_of_hands:
-
-        start_hand = deal_hand(HAND_SIZE)
-        display_hand(start_hand)
+        print('--------')
+        hand = deal_hand(HAND_SIZE)
         
-        substitute = yes_no('Would you like to substitute a letter? ')
+        if can_substitude:
+            display_hand(hand)
+            substitute = yes_no('Would you like to substitute a letter? ')
+            
+            #processes substitude (possible only once per game)
+            if substitute.lower() == 'yes':
+                letter_to_change = latin_letters('Which letter would you like to replace: ')
+                hand = substitute_hand(hand, letter_to_change)
+                can_substitude = False
 
-        #processes substitude if user answered yes
-        if substitute.lower() == 'yes':
-            letter_to_change = latin_letters('Which letter would you like to replace: ')
-            hand = substitute_hand(start_hand, letter_to_change)
-        else:
-            hand = start_hand
         #counts score and plays hand
         score_for_hand = play_hand(hand, word_list)
+        score_for_hand_try2 = 0
 
         #processes replay
-        print('--------')
-        replay = yes_no('Would you like to replay the hand? ')
-        if replay.lower() == 'yes':
-            score_for_hand_try2 = play_hand(hand, word_list)
-        else:
-            score_for_hand_try2 = 0
+        if can_replay:
+            replay = yes_no('Would you like to replay the hand? ')
+
+            if replay.lower() == 'yes':
+                score_for_hand_try2 = play_hand(hand, word_list)
+                can_replay = False
+
         #updates overall score
         overall_score += max(score_for_hand, score_for_hand_try2)
-
         number_of_hands -= 1
 
     print('--------')
