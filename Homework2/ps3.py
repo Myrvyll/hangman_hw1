@@ -16,16 +16,12 @@ LETTERS = 'aeioubcdfghjklmnpqrstvwxyz'
 HAND_SIZE = 7
 WILDCARD = '*'
 STOP_GAME = '!!'
+WORDLIST_FILENAME = "words.txt"
 
 SCRABBLE_LETTER_VALUES = {
     'a': 1, 'b': 3, 'c': 3, 'd': 2, 'e': 1, 'f': 4, 'g': 2, 'h': 4, 'i': 1, 'j': 8, 'k': 5, 'l': 1, 'm': 3, 'n': 1, 'o': 1, 'p': 3, 'q': 10, 'r': 1, 's': 1, 't': 1, 'u': 1, 'v': 4, 'w': 4, 'x': 8, 'y': 4, 'z': 10, '*': 0
 }
 
-# -----------------------------------
-# Helper code
-# (you don't need to understand this helper code)
-
-WORDLIST_FILENAME = "words.txt"
 
 def load_words():
     """
@@ -45,6 +41,7 @@ def load_words():
     print("  ", len(wordlist), "words loaded.")
     return wordlist
 
+
 def get_frequency_dict(sequence):
     """
     Returns a dictionary where the keys are elements of the sequence
@@ -54,20 +51,14 @@ def get_frequency_dict(sequence):
     sequence: string or list
     return: dictionary
     """
-    
+
     # freqs: dictionary (element_type -> int)
     freq = {}
     for x in sequence:
-        freq[x] = freq.get(x,0) + 1
+        freq[x] = freq.get(x, 0) + 1
     return freq
-	
 
-# (end of helper code)
-# -----------------------------------
 
-#
-# Problem #1: Scoring a word
-#
 def get_word_score(word, n):
     """
     Returns the score for a word. Assumes the word is a
@@ -106,7 +97,7 @@ def display_hand(hand):
     print('Current hand: ', end='')
     for letter in hand.keys():
         for _ in range(hand[letter]):
-             print(letter, end=' ')      # print all on the same line
+            print(letter, end=' ')      # print all on the same line
     print()                              # print an empty line
 
 
@@ -118,7 +109,6 @@ def enter_natnumbers(comment):
     comment: string that is outputted when function is called
     return: integer
     '''
-
     wrong = True
     while wrong:
         number = input(comment)
@@ -163,7 +153,6 @@ def latin_letters(comment):
     comment: string that is outputted when function is called
     return: string with one letter
     '''    
-
     wrong = True
     while wrong:
         line = input(comment)
@@ -173,7 +162,6 @@ def latin_letters(comment):
             print('It must be one latin letter.')
     
     return line
-
 
 
 def deal_hand(n):
@@ -189,7 +177,6 @@ def deal_hand(n):
     n: int >= 0
     returns: dictionary (string -> int)
     """
-    
     hand = {'*': 1}
     num_vowels = int(math.ceil(n / 3))
 
@@ -229,7 +216,7 @@ def update_hand(hand, word):
     return hand2
 
 
-def is_valid_word(word, hand, word_list):
+def is_valid_word(word, hand, wordlist):
     """
     Returns True if word is in the word_list and is entirely
     composed of letters in the hand. Otherwise, returns False.
@@ -257,11 +244,11 @@ def is_valid_word(word, hand, word_list):
         for element in VOWELS:
             word2 = word.replace(WILDCARD, element)
 
-            if word2 in word_list:
+            if word2 in wordlist:
                 return True
 
     #checks whether word exists
-    if word in word_list:
+    if word in wordlist:
         return True
     
     return False
@@ -279,8 +266,7 @@ def calculate_handlen(hand):
     return summa
 
 
-
-def play_hand(hand, word_list):
+def play_hand(hand, wordlist):
 
     """
     Allows the user to play the given hand, as follows:
@@ -306,7 +292,7 @@ def play_hand(hand, word_list):
             continue
 
         #processes situation when the word is inputted in a right way
-        if is_valid_word(word, hand, word_list):
+        if is_valid_word(word, hand, wordlist):
             score = get_word_score(word, handlen)
             total_score += score
             print(f'"{word}" earned {score} points. Total: {total_score} points\n')
@@ -349,8 +335,8 @@ def substitute_hand(hand, letter):
     """
     hand2 = hand.copy()
 
-    past_letters = hand2.keys()
-    available_letters = list(LETTERS - past_letters)
+    past_letters = set(hand2.keys())
+    available_letters = list(set(LETTERS) - set(past_letters))
     
     #if letter in hand replaces it
     if letter in hand.keys():
@@ -360,7 +346,7 @@ def substitute_hand(hand, letter):
     return hand2
        
     
-def play_game(word_list):
+def play_game(wordlist):
     """
     Allow the user to play a series of hands
       word_list: list of lowercase strings
@@ -394,7 +380,7 @@ def play_game(word_list):
             replay = yes_no('Would you like to replay the hand? ')
 
             if replay.lower() == 'yes':
-                score_for_hand_try2 = play_hand(hand, word_list)
+                score_for_hand_try2 = play_hand(hand, wordlist)
                 can_replay = False
 
         #updates overall score
